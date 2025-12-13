@@ -80,7 +80,22 @@
   ).render(onScanSuccess);
 </script>
   
-  
+  <!-- Firebase (ya funcionando) -->
+<script>
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<!-- Lector QR -->
+<h2>Validación de Entradas</h2>
+<div id="reader"></div>
+<p id="resultado"></p>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+  // código del QR
+</script>
+
 </body>
 </html>
 
