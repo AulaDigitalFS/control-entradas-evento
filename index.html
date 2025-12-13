@@ -14,7 +14,7 @@
 <h2>Control de Entradas - Evento</h2>
 <p id="estado">Conectando con Firebase...</p>
 
-<script>
+  <script>
   const firebaseConfig = {
     apiKey: "TU_API_KEY",
     authDomain: "TU_PROYECTO.firebaseapp.com",
@@ -38,6 +38,49 @@
 
 </script>
 
+<h2>Validación de Entradas</h2>
+<div id="reader" style="width:300px;"></div>
+<p id="resultado"></p>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+  const db = firebase.firestore();
+
+  function onScanSuccess(textoQR) {
+    const ref = db.collection("entradas").doc(textoQR);
+
+    ref.get().then(doc => {
+      if (!doc.exists) {
+        resultado("❌ Entrada no válida");
+        return;
+      }
+
+      if (doc.data().usada) {
+        resultado("⚠️ Entrada ya utilizada");
+        return;
+      }
+
+      ref.update({
+        usada: true,
+        horaIngreso: new Date()
+      });
+
+      resultado("✅ Acceso permitido");
+    });
+  }
+
+  function resultado(msg) {
+    document.getElementById("resultado").innerText = msg;
+  }
+
+  new Html5QrcodeScanner(
+    "reader",
+    { fps: 10, qrbox: 250 }
+  ).render(onScanSuccess);
+</script>
+  
+  
 </body>
 </html>
 
