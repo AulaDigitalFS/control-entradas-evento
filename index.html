@@ -8,23 +8,20 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- QR -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
+
 <body>
 
-<h2>Control de Entradas - Evento</h2>
-<p id="estado">Conectando con Firebase...</p>
+<h2>Validación de Entradas</h2>
+<div id="reader" style="width:300px;"></div>
+<p id="resultado"></p>
 
-  <script>
+<script>
+  // CONFIGURACIÓN FIREBASE (UNA SOLA VEZ)
   const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_PROYECTO.firebaseapp.com",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_BUCKET",
-    messagingSenderId: "TU_SENDER_ID",
-    appId: "TU_APP_ID"
-  };
-
- const firebaseConfig = {
     apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
     authDomain: "control-entradas-evento.firebaseapp.com",
     projectId: "control-entradas-evento",
@@ -33,31 +30,24 @@
     appId: "1:490742741430:web:c3db7037eed6a121346917"
   };
 
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-
-</script>
-
-<h2>Validación de Entradas</h2>
-<div id="reader" style="width:300px;"></div>
-<p id="resultado"></p>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-
-<script>
+  firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+
+  function mostrar(msg) {
+    document.getElementById("resultado").innerText = msg;
+  }
 
   function onScanSuccess(textoQR) {
     const ref = db.collection("entradas").doc(textoQR);
 
     ref.get().then(doc => {
       if (!doc.exists) {
-        resultado("❌ Entrada no válida");
+        mostrar("❌ Entrada no válida");
         return;
       }
 
       if (doc.data().usada) {
-        resultado("⚠️ Entrada ya utilizada");
+        mostrar("⚠️ Entrada ya utilizada");
         return;
       }
 
@@ -66,12 +56,8 @@
         horaIngreso: new Date()
       });
 
-      resultado("✅ Acceso permitido");
+      mostrar("✅ Acceso permitido");
     });
-  }
-
-  function resultado(msg) {
-    document.getElementById("resultado").innerText = msg;
   }
 
   new Html5QrcodeScanner(
@@ -79,23 +65,8 @@
     { fps: 10, qrbox: 250 }
   ).render(onScanSuccess);
 </script>
-  
-  <!-- Firebase (ya funcionando) -->
-<script>
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-</script>
-
-<!-- Lector QR -->
-<h2>Validación de Entradas</h2>
-<div id="reader"></div>
-<p id="resultado"></p>
-
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script>
-  // código del QR
-</script>
 
 </body>
 </html>
+
 
