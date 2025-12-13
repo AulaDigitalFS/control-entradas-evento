@@ -30,8 +30,9 @@
     appId: "1:490742741430:web:c3db7037eed6a121346917"
   };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  function onScanSuccess(textoQR) {
+  alert("QR leído: " + textoQR);
+}
 
   function mostrar(msg) {
     document.getElementById("resultado").innerText = msg;
