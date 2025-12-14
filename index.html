@@ -26,13 +26,54 @@
     .error { color: #ef4444; font-size: 1.4em; }
     .warn { color: #facc15; font-size: 1.4em; }
   </style>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+.container {
+  background: #020617;
+  padding: 25px 30px;
+  border-radius: 12px;
+  width: 360px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  text-align: center;
+}
+h2 {
+  margin-top: 0;
+}
+#resultado {
+  margin-top: 15px;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+.valida { color: #22c55e; }
+.usada { color: #facc15; }
+.bloqueada { color: #ef4444; }
+#reiniciar {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+#reiniciar:hover { background: #1d4ed8; }
+</style>
 </head>
 
 <body>
+<div class="container">
 
 <h2>Validación de Entradas</h2>
 <div id="reader" style="width:300px;"></div>
 <p id="resultado"></p>
+<button id="reiniciar" style="display:none; margin-top:15px; padding:10px 20px; font-size:1em;">Escanear otra vez</button>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -56,23 +97,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const r = document.getElementById("resultado");
     r.className = tipo;
     r.innerText = msg;
+    document.getElementById("reiniciar").style.display = "inline-block";
   }
 
   function onScanSuccess(textoQR) {
     if (bloqueado) return;
     bloqueado = true;
-    scanner.clear(); // DETIENE EL ESCÁNER
+    scanner.clear();
 
     const ref = db.collection("entradas").doc(textoQR);
 
     ref.get().then(doc => {
       if (!doc.exists) {
-        mostrar("❌ ENTRADA NO VÁLIDA", "error");
+        mostrar("⛔ QR inexistente / manipulado", "bloqueada");
         return;
       }
 
-      if (doc.data().usada) {
-        mostrar("⚠️ ENTRADA YA UTILIZADA", "warn");
+      const data = doc.data();
+
+      if (!data.id || data.id !== textoQR) {
+        mostrar("⛔ QR alterado", "bloqueada");
+        return;
+      }
+
+      if (data.usada) {
+        mostrar("⚠️ Entrada ya utilizada", "usada");
         return;
       }
 
@@ -81,20 +130,12 @@ document.addEventListener("DOMContentLoaded", function () {
         horaIngreso: new Date()
       });
 
-      mostrar("✅ ACCESO PERMITIDO", "ok");
+      mostrar("✅ Entrada válida", "valida");
     });
-  }
-
-  scanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: 250 }
-  );
-
-  scanner.render(onScanSuccess);
-});
+  });
 </script>
 
+</div>
 </body>
 </html>
-
 
