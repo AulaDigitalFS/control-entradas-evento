@@ -99,6 +99,7 @@ function mostrar(msg, tipo) {
 }
 
 function onScanSuccess(textoQR) {
+  alert("QR leído: [" + textoQR + "]");
   if (bloqueado) return;
   bloqueado = true;
 
@@ -149,7 +150,6 @@ document.getElementById("reiniciar").onclick = () => {
   scanner.render(onScanSuccess);
 };
 </script>
-
 
 </div>
 </body>
