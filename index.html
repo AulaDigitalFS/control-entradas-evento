@@ -114,7 +114,7 @@ function onScanSuccess(textoQR) {
 
     const data = doc.data();
 
-    if (!data.id || data.id !== textoQR) {
+    f (!data.id || data.id.trim() !== textoQR.trim()) {
       mostrar("⛔ QR alterado", "bloqueada");
       return;
     }
