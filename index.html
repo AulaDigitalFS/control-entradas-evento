@@ -97,11 +97,11 @@ function mostrar(msg, tipo) {
   r.innerText = msg;
   document.getElementById("reiniciar").style.display = "inline-block";
 }
-
 function onScanSuccess(textoQR) {
-  alert("QR leído: [" + textoQR + "]");
-  if (bloqueado) return;
-  bloqueado = true;
+  textoQR = textoQR.trim();
+  if (data.id.trim() !== textoQR) {
+  mostrar("⛔ QR alterado", "bloqueada");
+  return;
 
   scanner.clear();
 
