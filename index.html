@@ -11,6 +11,21 @@
 
   <!-- Lector QR -->
   <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      text-align: center;
+      padding: 20px;
+    }
+    h2 { margin-bottom: 10px; }
+    #reader { margin: 20px auto; }
+    .ok { color: #22c55e; font-size: 1.4em; }
+    .error { color: #ef4444; font-size: 1.4em; }
+    .warn { color: #facc15; font-size: 1.4em; }
+  </style>
 </head>
 
 <body>
@@ -22,7 +37,6 @@
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-  // CONFIGURACIÓN FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
     authDomain: "control-entradas-evento.firebaseapp.com",
@@ -35,21 +49,30 @@ document.addEventListener("DOMContentLoaded", function () {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  function mostrar(msg) {
-    document.getElementById("resultado").innerText = msg;
+  let scanner;
+  let bloqueado = false;
+
+  function mostrar(msg, tipo) {
+    const r = document.getElementById("resultado");
+    r.className = tipo;
+    r.innerText = msg;
   }
 
   function onScanSuccess(textoQR) {
+    if (bloqueado) return;
+    bloqueado = true;
+    scanner.clear(); // DETIENE EL ESCÁNER
+
     const ref = db.collection("entradas").doc(textoQR);
 
     ref.get().then(doc => {
       if (!doc.exists) {
-        mostrar("❌ Entrada no válida");
+        mostrar("❌ ENTRADA NO VÁLIDA", "error");
         return;
       }
 
       if (doc.data().usada) {
-        mostrar("⚠️ Entrada ya utilizada");
+        mostrar("⚠️ ENTRADA YA UTILIZADA", "warn");
         return;
       }
 
@@ -58,18 +81,20 @@ document.addEventListener("DOMContentLoaded", function () {
         horaIngreso: new Date()
       });
 
-      mostrar("✅ Acceso permitido");
+      mostrar("✅ ACCESO PERMITIDO", "ok");
     });
   }
 
-  new Html5QrcodeScanner(
+  scanner = new Html5QrcodeScanner(
     "reader",
     { fps: 10, qrbox: 250 }
-  ).render(onScanSuccess);
+  );
 
+  scanner.render(onScanSuccess);
 });
 </script>
 
 </body>
 </html>
+
 
