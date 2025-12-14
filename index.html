@@ -99,10 +99,11 @@ function mostrar(msg, tipo) {
 }
 function onScanSuccess(textoQR) {
   textoQR = textoQR.trim();
+  
   if (data.id.trim() !== textoQR) {
   mostrar("⛔ QR alterado", "bloqueada");
   return;
-
+}
   scanner.clear();
 
   const ref = db.collection("entradas").doc(textoQR);
