@@ -99,25 +99,29 @@ function onScanSuccess(decodedText) {
   ref.get().then(doc => {
     if (!doc.exists) {
       mostrar("⛔ QR inexistente / manipulado", "bloqueada");
-      scanner.clear();
       return;
     }
 
     const data = doc.data();
 
-    if (data.usada) {
-      mostrar("⚠️ Entrada ya utilizada", "usada");
-      scanner.clear();
+    // QR alterado: si no tiene el campo 'id'
+    if (!data.id) {
+      mostrar("⛔ QR alterado", "bloqueada");
       return;
     }
 
-    // Marcar como usada
-    ref.update({ usada: true, horaIngreso: new Date() });
+    if (data.usada) {
+      mostrar("⚠️ Entrada ya utilizada", "usada");
+      return;
+    }
 
+    // QR válido
+    ref.update({ usada: true, horaIngreso: new Date() });
     mostrar("✅ Entrada válida", "valida");
-    scanner.clear();
   }).catch(err => {
     mostrar("❌ Error de conexión", "bloqueada");
+  }).finally(() => {
+    // detener la cámara solo después de procesar
     scanner.clear();
   });
 }
