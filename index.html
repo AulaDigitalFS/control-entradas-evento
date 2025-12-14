@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- QR -->
+  <!-- Lector QR -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 
@@ -20,7 +20,9 @@
 <p id="resultado"></p>
 
 <script>
-  // CONFIGURACIÓN FIREBASE (UNA SOLA VEZ)
+document.addEventListener("DOMContentLoaded", function () {
+
+  // CONFIGURACIÓN FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
     authDomain: "control-entradas-evento.firebaseapp.com",
@@ -30,9 +32,8 @@
     appId: "1:490742741430:web:c3db7037eed6a121346917"
   };
 
-  function onScanSuccess(textoQR) {
-  alert("QR leído: " + textoQR);
-}
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
   function mostrar(msg) {
     document.getElementById("resultado").innerText = msg;
@@ -65,9 +66,10 @@
     "reader",
     { fps: 10, qrbox: 250 }
   ).render(onScanSuccess);
+
+});
 </script>
 
 </body>
 </html>
-
 
