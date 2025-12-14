@@ -17,63 +17,54 @@
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: #e5e7eb;
-      text-align: center;
-      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
     }
-    h2 { margin-bottom: 10px; }
+    .container {
+      background: #020617;
+      padding: 25px 30px;
+      border-radius: 12px;
+      width: 360px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
     #reader { margin: 20px auto; }
-    .ok { color: #22c55e; font-size: 1.4em; }
-    .error { color: #ef4444; font-size: 1.4em; }
-    .warn { color: #facc15; font-size: 1.4em; }
+    #resultado {
+      margin-top: 15px;
+      font-size: 1.2em;
+      font-weight: bold;
+      min-height: 1.5em;
+    }
+    .valida { color: #22c55e; }
+    .usada { color: #facc15; }
+    .bloqueada { color: #ef4444; }
+    #reiniciar {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 10px 20px;
+      font-size: 1em;
+      margin-top: 15px;
+      display: none;
+    }
+    #reiniciar:hover { background: #1d4ed8; }
   </style>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #0f172a;
-  color: #e5e7eb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-}
-.container {
-  background: #020617;
-  padding: 25px 30px;
-  border-radius: 12px;
-  width: 360px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-  text-align: center;
-}
-h2 {
-  margin-top: 0;
-}
-#resultado {
-  margin-top: 15px;
-  font-size: 1.2em;
-  font-weight: bold;
-}
-.valida { color: #22c55e; }
-.usada { color: #facc15; }
-.bloqueada { color: #ef4444; }
-#reiniciar {
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-#reiniciar:hover { background: #1d4ed8; }
-</style>
 </head>
-
 <body>
 <div class="container">
-
-<h2>Validación de Entradas</h2>
-<div id="reader" style="width:300px;"></div>
-<p id="resultado"></p>
-<button id="reiniciar" style="display:none; margin-top:15px; padding:10px 20px; font-size:1em;">Escanear otra vez</button>
+  <h2>Control de Entradas - Evento</h2>
+  <div id="reader" style="width:300px;"></div>
+  <p id="resultado"></p>
+  <button id="reiniciar">Escanear otra vez</button>
 
 <script>
 const firebaseConfig = {
@@ -97,10 +88,9 @@ function mostrar(msg, tipo) {
   r.innerText = msg;
   document.getElementById("reiniciar").style.display = "inline-block";
 }
+
 function onScanSuccess(decodedText) {
   decodedText = decodedText.trim();
-
-  mostrar("QR leído: " + decodedText, "warn"); // ← prueba visible
 
   if (bloqueado) return;
   bloqueado = true;
@@ -109,7 +99,7 @@ function onScanSuccess(decodedText) {
 
   ref.get().then(doc => {
     if (!doc.exists) {
-      mostrar("⛔ QR inexistente", "bloqueada");
+      mostrar("⛔ QR inexistente / manipulado", "bloqueada");
       return;
     }
 
@@ -125,24 +115,25 @@ function onScanSuccess(decodedText) {
       return;
     }
 
-    ref.update({
-      usada: true,
-      horaIngreso: new Date()
-    });
+    ref.update({ usada: true, horaIngreso: new Date() });
 
     mostrar("✅ Entrada válida", "valida");
   });
 }
 
-
-// 🔥 AQUÍ recién se crea el escáner
-scanner = new Html5QrcodeScanner(
-  "reader",
-  { fps: 10, qrbox: 250 }
-);
+// Inicializa el lector QR
+scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
 scanner.render(onScanSuccess);
-</script>
 
+// Botón para reiniciar escaneo
+document.getElementById("reiniciar").onclick = () => {
+  bloqueado = false;
+  document.getElementById("resultado").innerText = "";
+  document.getElementById("resultado").className = "";
+  document.getElementById("reiniciar").style.display = "none";
+  scanner.render(onScanSuccess);
+};
+</script>
 </div>
 </body>
 </html>
