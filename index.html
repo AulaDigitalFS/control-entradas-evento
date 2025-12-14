@@ -136,5 +136,71 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 </div>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+let bloqueado = false;
+let scanner;
+
+const db = firebase.firestore();
+
+function mostrar(msg, tipo) {
+  const r = document.getElementById("resultado");
+  r.className = tipo;
+  r.innerText = msg;
+  document.getElementById("reiniciar").style.display = "block";
+}
+
+function onScanSuccess(textoQR) {
+  if (bloqueado) return;
+  bloqueado = true;
+
+  scanner.clear();
+
+  const ref = db.collection("entradas").doc(textoQR);
+
+  ref.get().then(doc => {
+    if (!doc.exists) {
+      mostrar("⛔ QR inexistente o manipulado", "bloqueada");
+      return;
+    }
+
+    const data = doc.data();
+
+    if (!data.id || data.id !== textoQR) {
+      mostrar("⛔ QR alterado", "bloqueada");
+      return;
+    }
+
+    if (data.usada) {
+      mostrar("⚠️ Entrada ya utilizada", "usada");
+      return;
+    }
+
+    ref.update({
+      usada: true,
+      horaIngreso: new Date()
+    });
+
+    mostrar("✅ Entrada válida", "valida");
+  });
+}
+
+scanner = new Html5QrcodeScanner(
+  "reader",
+  { fps: 10, qrbox: 250 }
+);
+
+scanner.render(onScanSuccess);
+
+document.getElementById("reiniciar").onclick = () => {
+  bloqueado = false;
+  document.getElementById("resultado").innerText = "";
+  document.getElementById("resultado").className = "";
+  document.getElementById("reiniciar").style.display = "none";
+  scanner.render(onScanSuccess);
+};
+</script>
+
 </body>
 </html>
