@@ -99,7 +99,6 @@ function mostrar(msg, tipo) {
 }
 function onScanSuccess(textoQR) {
   textoQR = textoQR.trim();
- } 
   
   if (data.id.trim() !== textoQR) {
   mostrar("⛔ QR alterado", "bloqueada");
