@@ -81,7 +81,6 @@ const db = firebase.firestore();
 
 let bloqueado = false;
 
-// Función para mostrar mensajes en pantalla
 function mostrar(msg, tipo) {
   const r = document.getElementById("resultado");
   r.className = tipo;
@@ -89,19 +88,19 @@ function mostrar(msg, tipo) {
   document.getElementById("reiniciar").style.display = "inline-block";
 }
 
-// Función que se ejecuta al leer un QR
 function onScanSuccess(decodedText) {
+  if (bloqueado) return;
+  bloqueado = true;
   decodedText = decodedText.trim();
 
-  if (bloqueado) return;
+  // detener cámara inmediatamente
+  scanner.clear();
 
   const ref = db.collection("entradas").doc(decodedText);
 
   ref.get().then(doc => {
     if (!doc.exists) {
       mostrar("⛔ QR inexistente / manipulado", "bloqueada");
-      bloqueado = true;
-      scanner.clear();
       return;
     }
 
@@ -109,24 +108,16 @@ function onScanSuccess(decodedText) {
 
     if (!data.id || data.id.trim() !== decodedText) {
       mostrar("⛔ QR alterado", "bloqueada");
-      bloqueado = true;
-      scanner.clear();
       return;
     }
 
     if (data.usada) {
       mostrar("⚠️ Entrada ya utilizada", "usada");
-      bloqueado = true;
-      scanner.clear();
       return;
     }
 
-    // Marcar como usada
     ref.update({ usada: true, horaIngreso: new Date() });
-
     mostrar("✅ Entrada válida", "valida");
-    bloqueado = true;
-    scanner.clear();
   });
 }
 
