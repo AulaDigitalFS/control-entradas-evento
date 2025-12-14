@@ -140,16 +140,8 @@ scanner = new Html5QrcodeScanner(
   "reader",
   { fps: 10, qrbox: 250 }
 );
-
 scanner.render(onScanSuccess);
 
-document.getElementById("reiniciar").onclick = () => {
-  bloqueado = false;
-  document.getElementById("resultado").innerText = "";
-  document.getElementById("resultado").className = "";
-  document.getElementById("reiniciar").style.display = "none";
-  scanner.render(onScanSuccess);
-};
 </script>
 
 </div>
