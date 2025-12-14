@@ -76,79 +76,80 @@ h2 {
 <button id="reiniciar" style="display:none; margin-top:15px; padding:10px 20px; font-size:1em;">Escanear otra vez</button>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+const firebaseConfig = {
+  apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+  authDomain: "control-entradas-evento.firebaseapp.com",
+  projectId: "control-entradas-evento",
+  storageBucket: "control-entradas-evento.firebasestorage.app",
+  messagingSenderId: "490742741430",
+  appId: "1:490742741430:web:c3db7037eed6a121346917"
+};
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
-    authDomain: "control-entradas-evento.firebaseapp.com",
-    projectId: "control-entradas-evento",
-    storageBucket: "control-entradas-evento.firebasestorage.app",
-    messagingSenderId: "490742741430",
-    appId: "1:490742741430:web:c3db7037eed6a121346917"
-  };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+let scanner;
+let bloqueado = false;
 
-  let scanner;
-  let bloqueado = false;
+function mostrar(msg, tipo) {
+  const r = document.getElementById("resultado");
+  r.className = tipo;
+  r.innerText = msg;
+  document.getElementById("reiniciar").style.display = "inline-block";
+}
 
-  function mostrar(msg, tipo) {
-    const r = document.getElementById("resultado");
-    r.className = tipo;
-    r.innerText = msg;
-    document.getElementById("reiniciar").style.display = "inline-block";
-  }
-    alert("JS cargado");
-    scanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: 250 }
-  );
+function onScanSuccess(textoQR) {
+  if (bloqueado) return;
+  bloqueado = true;
 
-  scanner.render(onScanSuccess);
+  scanner.clear();
 
-  document.getElementById("reiniciar").onclick = () => {
-    bloqueado = false;
-    document.getElementById("resultado").innerText = "";
-    document.getElementById("resultado").className = "";
-    document.getElementById("reiniciar").style.display = "none";
-    scanner.render(onScanSuccess);
-  };
+  const ref = db.collection("entradas").doc(textoQR);
 
-  function onScanSuccess(textoQR) {
-    if (bloqueado) return;
-    bloqueado = true;
-    scanner.clear();
+  ref.get().then(doc => {
+    if (!doc.exists) {
+      mostrar("⛔ QR inexistente / manipulado", "bloqueada");
+      return;
+    }
 
-    const ref = db.collection("entradas").doc(textoQR);
+    const data = doc.data();
 
-    ref.get().then(doc => {
-      if (!doc.exists) {
-        mostrar("⛔ QR inexistente / manipulado", "bloqueada");
-        return;
-      }
+    if (!data.id || data.id !== textoQR) {
+      mostrar("⛔ QR alterado", "bloqueada");
+      return;
+    }
 
-      const data = doc.data();
+    if (data.usada) {
+      mostrar("⚠️ Entrada ya utilizada", "usada");
+      return;
+    }
 
-      if (!data.id || data.id !== textoQR) {
-        mostrar("⛔ QR alterado", "bloqueada");
-        return;
-      }
-
-      if (data.usada) {
-        mostrar("⚠️ Entrada ya utilizada", "usada");
-        return;
-      }
-
-      ref.update({
-        usada: true,
-        horaIngreso: new Date()
-      });
-
-      mostrar("✅ Entrada válida", "valida");
+    ref.update({
+      usada: true,
+      horaIngreso: new Date()
     });
+
+    mostrar("✅ Entrada válida", "valida");
   });
+}
+
+// 🔥 AQUÍ recién se crea el escáner
+scanner = new Html5QrcodeScanner(
+  "reader",
+  { fps: 10, qrbox: 250 }
+);
+
+scanner.render(onScanSuccess);
+
+document.getElementById("reiniciar").onclick = () => {
+  bloqueado = false;
+  document.getElementById("resultado").innerText = "";
+  document.getElementById("resultado").className = "";
+  document.getElementById("reiniciar").style.display = "none";
+  scanner.render(onScanSuccess);
+};
 </script>
+
 
 </div>
 </body>
