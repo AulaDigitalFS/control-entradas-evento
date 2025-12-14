@@ -97,26 +97,25 @@ function mostrar(msg, tipo) {
   r.innerText = msg;
   document.getElementById("reiniciar").style.display = "inline-block";
 }
-function onScanSuccess(textoQR) {
-  textoQR = textoQR.trim();
-  
-  if (data.id.trim() !== textoQR) {
-  mostrar("⛔ QR alterado", "bloqueada");
-  return;
-}
-  scanner.clear();
+function onScanSuccess(decodedText) {
+  decodedText = decodedText.trim();
 
-  const ref = db.collection("entradas").doc(textoQR);
+  mostrar("QR leído: " + decodedText, "warn"); // ← prueba visible
+
+  if (bloqueado) return;
+  bloqueado = true;
+
+  const ref = db.collection("entradas").doc(decodedText);
 
   ref.get().then(doc => {
     if (!doc.exists) {
-      mostrar("⛔ QR inexistente / manipulado", "bloqueada");
+      mostrar("⛔ QR inexistente", "bloqueada");
       return;
     }
 
     const data = doc.data();
 
-    if (!data.id || data.id.trim() !== textoQR.trim()) {
+    if (!data.id || data.id.trim() !== decodedText) {
       mostrar("⛔ QR alterado", "bloqueada");
       return;
     }
@@ -133,6 +132,7 @@ function onScanSuccess(textoQR) {
 
     mostrar("✅ Entrada válida", "valida");
   });
+}
 }
 
 // 🔥 AQUÍ recién se crea el escáner
