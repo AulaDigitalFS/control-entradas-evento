@@ -67,6 +67,7 @@
 <script>
   document.addEventListener("DOMContentLoaded", () => {
 
+    // 🔥 Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
       authDomain: "control-entradas-evento.firebaseapp.com",
@@ -79,8 +80,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let scanner;
-    let bloqueado = false;
+    let scanner = null;
+    let bloqueado = false; // 🔒 BLOQUEO GLOBAL
 
     const resultado = document.getElementById("resultado");
     const btnReiniciar = document.getElementById("reiniciar");
@@ -97,6 +98,10 @@
       resultado.className = "";
       btnReiniciar.style.display = "none";
 
+      if (scanner) {
+        scanner.clear().catch(() => {});
+      }
+
       scanner = new Html5QrcodeScanner("reader", {
         fps: 10,
         qrbox: 250
@@ -106,17 +111,19 @@
     }
 
     function onScanSuccess(textoQR) {
+      // 🔒 BLOQUEO ABSOLUTO INMEDIATO
       if (bloqueado) return;
       bloqueado = true;
-      scanner.clear();
 
-      // VALIDACIÓN CLAVE: QR vacío o inválido
-      if (!textoQR || textoQR.trim() === "") {
+      scanner.clear(); // ⛔ apaga cámara
+
+      // ⛔ QR vacío o corrupto
+      if (!textoQR || textoQR.trim().length < 3) {
         mostrar("⛔ QR alterado o inválido", "bloqueada");
         return;
       }
 
-      const ref = db.collection("entradas").doc(textoQR);
+      const ref = db.collection("entradas").doc(textoQR.trim());
 
       ref.get().then(doc => {
         if (!doc.exists) {
@@ -133,7 +140,7 @@
 
         ref.update({
           usada: true,
-          horaIngreso: new Date()
+          horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         mostrar("✅ Entrada válida", "valida");
@@ -144,7 +151,7 @@
 
     btnReiniciar.addEventListener("click", iniciarScanner);
 
-    iniciarScanner();
+    iniciarScanner(); // ▶️ inicio automático
   });
 </script>
 
