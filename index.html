@@ -155,5 +155,26 @@
   });
 </script>
 
+  <script>
+  // ⚠️ SCRIPT TEMPORAL: crear entradas
+  const TOTAL = 1500;
+
+  for (let i = 1; i <= TOTAL; i++) {
+    const codigo = `ADEUESO-${String(i).padStart(4, "0")}`;
+
+    firebase.firestore()
+      .collection("entradas")
+      .doc(codigo)
+      .set({
+        usada: false,
+        horaIngreso: null,
+        creada: new Date()
+      });
+  }
+
+  console.log("Entradas creadas:", TOTAL);
+</script>
+
+  
 </body>
 </html>
