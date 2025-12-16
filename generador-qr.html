@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Generador Masivo de QR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+}
+.container {
+  background: #020617;
+  padding: 25px;
+  border-radius: 12px;
+  width: 380px;
+}
+h2 { text-align: center; }
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1em;
+}
+button {
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+button:hover { background: #1d4ed8; }
+#log {
+  margin-top: 15px;
+  font-size: 0.9em;
+  text-align: center;
+}
+#qr-temp { display: none; }
+</style>
+</head>
+
+<body>
+<div class="container">
+  <h2>Generador Masivo de QR</h2>
+
+  <input id="prefijo" placeholder="Prefijo (ej: ADEUESO)">
+  <input id="desde" type="number" placeholder="Desde (ej: 1)">
+  <input id="hasta" type="number" placeholder="Hasta (ej: 1500)">
+
+  <button onclick="generarZIP()">Descargar PNG (ZIP)</button>
+  <button onclick="generarPDF()">Descargar PDF</button>
+
+  <div id="log"></div>
+</div>
+
+<div id="qr-temp"></div>
+
+<script>
+const qrTemp = document.getElementById("qr-temp");
+const log = document.getElementById("log");
+
+function validar() {
+  const prefijo = document.getElementById("prefijo").value.trim();
+  const desde = parseInt(document.getElementById("desde").value);
+  const hasta = parseInt(document.getElementById("hasta").value);
+  if (!prefijo || isNaN(desde) || isNaN(hasta) || desde > hasta) {
+    alert("Datos inválidos");
+    return null;
+  }
+  return { prefijo, desde, hasta };
+}
+
+function generarCodigo(prefijo, i) {
+  return `${prefijo}-${String(i).padStart(4, "0")}`;
+}
+
+async function generarZIP() {
+  const datos = validar();
+  if (!datos) return;
+
+  const zip = new JSZip();
+  qrTemp.innerHTML = "";
+  log.innerText = "Generando QR...";
+
+  for (let i = datos.desde; i <= datos.hasta; i++) {
+    const codigo = generarCodigo(datos.prefijo, i);
+
+    const div = document.createElement("div");
+    qrTemp.appendChild(div);
+
+    new QRCode(div, { text: codigo, width: 300, height: 300 });
+    await new Promise(r => setTimeout(r, 30));
+
+    const img = div.querySelector("img");
+    const base64 = img.src.split(",")[1];
+    zip.file(`${codigo}.png`, base64, { base64: true });
+    qrTemp.innerHTML = "";
+
+    if (i % 50 === 0) log.innerText = `Generados ${i}`;
+  }
+
+  zip.generateAsync({ type: "blob" }).then(blob => {
+    saveAs(blob, `${datos.prefijo}_QR.zip`);
+    log.innerText = "ZIP listo";
+  });
+}
+
+async function generarPDF() {
+  const datos = validar();
+  if (!datos) return;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  qrTemp.innerHTML = "";
+  log.innerText = "Generando PDF...";
+
+  let x = 10, y = 10, c = 0;
+
+  for (let i = datos.desde; i <= datos.hasta; i++) {
+    const codigo = generarCodigo(datos.prefijo, i);
+
+    const div = document.createElement("div");
+    qrTemp.appendChild(div);
+
+    new QRCode(div, { text: codigo, width: 180, height: 180 });
+    await new Promise(r => setTimeout(r, 30));
+
+    const img = div.querySelector("img").src;
+    pdf.addImage(img, "PNG", x, y, 50, 50);
+    pdf.text(codigo, x, y + 55);
+
+    x += 60; c++;
+    if (c === 3) { x = 10; y += 70; c = 0; }
+    if (y > 250) { pdf.addPage(); x = 10; y = 10; }
+
+    qrTemp.innerHTML = "";
+  }
+
+  pdf.save(`${datos.prefijo}_QR.pdf`);
+  log.innerText = "PDF listo";
+}
+</script>
+</body>
+</html>
