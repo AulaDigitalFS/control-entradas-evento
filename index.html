@@ -65,125 +65,116 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
+/* =========================
+   🔥 FIREBASE (UNA SOLA VEZ)
+   ========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+  authDomain: "control-entradas-evento.firebaseapp.com",
+  projectId: "control-entradas-evento",
+  storageBucket: "control-entradas-evento.firebasestorage.app",
+  messagingSenderId: "490742741430",
+  appId: "1:490742741430:web:c3db7037eed6a121346917"
+};
 
-    // 🔥 Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
-      authDomain: "control-entradas-evento.firebaseapp.com",
-      projectId: "control-entradas-evento",
-      storageBucket: "control-entradas-evento.firebasestorage.app",
-      messagingSenderId: "490742741430",
-      appId: "1:490742741430:web:c3db7037eed6a121346917"
-    };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+/* =========================
+   📷 ESCÁNER QR
+   ========================= */
+let scanner = null;
+let bloqueado = false;
 
-    let scanner = null;
-    let bloqueado = false; // 🔒 BLOQUEO GLOBAL
+const resultado = document.getElementById("resultado");
+const btnReiniciar = document.getElementById("reiniciar");
 
-    const resultado = document.getElementById("resultado");
-    const btnReiniciar = document.getElementById("reiniciar");
+function mostrar(mensaje, clase) {
+  resultado.className = clase;
+  resultado.innerText = mensaje;
+  btnReiniciar.style.display = "inline-block";
+}
 
-    function mostrar(mensaje, clase) {
-      resultado.className = clase;
-      resultado.innerText = mensaje;
-      btnReiniciar.style.display = "inline-block";
-    }
+function iniciarScanner() {
+  bloqueado = false;
+  resultado.innerText = "";
+  resultado.className = "";
+  btnReiniciar.style.display = "none";
 
-    function iniciarScanner() {
-      bloqueado = false;
-      resultado.innerText = "";
-      resultado.className = "";
-      btnReiniciar.style.display = "none";
-
-      if (scanner) {
-        scanner.clear().catch(() => {});
-      }
-
-      scanner = new Html5QrcodeScanner("reader", {
-        fps: 10,
-        qrbox: 250
-      });
-
-      scanner.render(onScanSuccess);
-    }
-
-    function onScanSuccess(textoQR) {
-      // 🔒 BLOQUEO ABSOLUTO INMEDIATO
-      if (bloqueado) return;
-      bloqueado = true;
-
-      scanner.clear(); // ⛔ apaga cámara
-
-      // ⛔ QR vacío o corrupto
-      if (!textoQR || textoQR.trim().length < 3) {
-        mostrar("⛔ QR alterado o inválido", "bloqueada");
-        return;
-      }
-
-      const ref = db.collection("entradas").doc(textoQR.trim());
-
-      ref.get().then(doc => {
-        if (!doc.exists) {
-          mostrar("⛔ QR inexistente", "bloqueada");
-          return;
-        }
-
-        const data = doc.data();
-
-        if (data.usada === true) {
-          mostrar("⚠️ Entrada ya utilizada", "usada");
-          return;
-        }
-
-        ref.update({
-          usada: true,
-          horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        mostrar("✅ Entrada válida", "valida");
-      }).catch(() => {
-        mostrar("⛔ Error al validar QR", "bloqueada");
-      });
-    }
-
-    btnReiniciar.addEventListener("click", iniciarScanner);
-
-    iniciarScanner(); // ▶️ inicio automático
-  });
-</script>
-
-  <script>
-  // ⚠️ SCRIPT TEMPORAL – BORRAR DESPUÉS
-
-  const TOTAL = 1500;
-
-  async function generarEntradas() {
-    console.log("Iniciando generación de entradas...");
-
-    for (let i = 1; i <= TOTAL; i++) {
-      const codigo = `ADEUESO-${String(i).padStart(4, "0")}`;
-
-      await db.collection("entradas").doc(codigo).set({
-        id: codigo,
-        usada: false,
-        creada: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      if (i % 100 === 0) {
-        console.log(`Generadas ${i} entradas`);
-      }
-    }
-
-    console.log("✅ Entradas creadas");
-    alert("Entradas creadas correctamente");
+  if (scanner) {
+    scanner.clear().catch(() => {});
   }
 
-  generarEntradas();
+  scanner = new Html5QrcodeScanner("reader", {
+    fps: 10,
+    qrbox: 250
+  });
+
+  scanner.render(onScanSuccess);
+}
+
+function onScanSuccess(textoQR) {
+  if (bloqueado) return;
+  bloqueado = true;
+
+  scanner.clear();
+
+  if (!textoQR || textoQR.trim().length < 3) {
+    mostrar("⛔ QR alterado", "bloqueada");
+    return;
+  }
+
+  const codigo = textoQR.trim();
+  const ref = db.collection("entradas").doc(codigo);
+
+  ref.get().then(doc => {
+    if (!doc.exists) {
+      mostrar("⛔ QR inexistente", "bloqueada");
+      return;
+    }
+
+    if (doc.data().usada === true) {
+      mostrar("⚠️ Entrada ya utilizada", "usada");
+      return;
+    }
+
+    ref.update({
+      usada: true,
+      horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    mostrar("✅ Entrada válida", "valida");
+  }).catch(() => {
+    mostrar("⛔ Error de validación", "bloqueada");
+  });
+}
+
+btnReiniciar.onclick = iniciarScanner;
+iniciarScanner();
+
+/* ==================================================
+   ⚠️ GENERADOR DE ENTRADAS (USAR UNA SOLA VEZ)
+   👉 DESCOMENTA, RECARGA, ESPERA, VUELVE A COMENTAR
+   ================================================== */
+/*
+const TOTAL = 1500;
+
+(async function generarEntradas() {
+  console.log("Generando entradas...");
+  for (let i = 1; i <= TOTAL; i++) {
+    const codigo = `ADEUESO-${String(i).padStart(4, "0")}`;
+    await db.collection("entradas").doc(codigo).set({
+      id: codigo,
+      usada: false,
+      creada: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if (i % 100 === 0) console.log(i + " creadas");
+  }
+  alert("✅ Entradas generadas");
+})();
+*/
 </script>
 
-  
 </body>
 </html>
+
