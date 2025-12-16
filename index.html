@@ -113,10 +113,9 @@ function iniciarScanner() {
   scanner.render(onScanSuccess);
 }
 
-function onScanSuccess(textoQR) {
+async function onScanSuccess(textoQR) {
   if (bloqueado) return;
   bloqueado = true;
-
   scanner.clear();
 
   if (!textoQR || textoQR.trim().length < 3) {
@@ -127,40 +126,41 @@ function onScanSuccess(textoQR) {
   const codigo = textoQR.trim();
   const ref = db.collection("entradas").doc(codigo);
 
-  ref.get()
-  .then(doc => {
-    if (!doc.exists) {
-      mostrar("⛔ QR inexistente", "bloqueada");
-      return;
-    }
+  let doc;
 
-    const data = doc.data();
+  // 1️⃣ Intentar leer
+  try {
+    doc = await ref.get();
+  } catch (e) {
+    mostrar("⛔ QR inexistente", "bloqueada");
+    return;
+  }
 
-    if (data.usada === true) {
-      mostrar("⚠️ Entrada ya utilizada", "usada");
-      return;
-    }
+  if (!doc.exists) {
+    mostrar("⛔ QR inexistente", "bloqueada");
+    return;
+  }
 
-    return ref.update({
+  const data = doc.data();
+
+  if (data.usada === true) {
+    mostrar("⚠️ Entrada ya utilizada", "usada");
+    return;
+  }
+
+  // 2️⃣ Intentar marcar como usada
+  try {
+    await ref.update({
       usada: true,
       horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
     });
-  })
-  .then(() => {
-    if (!resultado.innerText) {
-      mostrar("✅ Entrada válida", "valida");
-    }
-  })
-  .catch(error => {
-    // 🔎 diferenciamos errores reales
-    if (error.code === "permission-denied") {
-      mostrar("⚠️ Entrada ya utilizada", "usada");
-    } else {
-      mostrar("⛔ Error de validación", "bloqueada");
-    }
-  });
-  
+    mostrar("✅ Entrada válida", "valida");
+  } catch (e) {
+    mostrar("⚠️ Entrada ya utilizada", "usada");
+  }
 }
+
+
 
 btnReiniciar.onclick = iniciarScanner;
 iniciarScanner();
