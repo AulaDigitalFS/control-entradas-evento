@@ -127,35 +127,39 @@ function onScanSuccess(textoQR) {
   const codigo = textoQR.trim();
   const ref = db.collection("entradas").doc(codigo);
 
-  ref.get().then(doc => {
+  ref.get()
+  .then(doc => {
     if (!doc.exists) {
       mostrar("⛔ QR inexistente", "bloqueada");
       return;
     }
 
-    if (doc.data().usada === true) {
+    const data = doc.data();
+
+    if (data.usada === true) {
       mostrar("⚠️ Entrada ya utilizada", "usada");
       return;
     }
 
-  if (data.usada === true) {
-  mostrar("⚠️ Entrada ya utilizada", "usada");
-  return;
-}
-
-ref.update({
-  usada: true,
-  horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
-}).then(() => {
-  mostrar("✅ Entrada válida", "valida");
-}).catch(() => {
-  mostrar("⚠️ Entrada ya utilizada", "usada");
-});
-
-    
-  }).catch(() => {
-    mostrar("⛔ Error de validación", "bloqueada");
+    return ref.update({
+      usada: true,
+      horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  })
+  .then(() => {
+    if (!resultado.innerText) {
+      mostrar("✅ Entrada válida", "valida");
+    }
+  })
+  .catch(error => {
+    // 🔎 diferenciamos errores reales
+    if (error.code === "permission-denied") {
+      mostrar("⚠️ Entrada ya utilizada", "usada");
+    } else {
+      mostrar("⛔ Error de validación", "bloqueada");
+    }
   });
+  
 }
 
 btnReiniciar.onclick = iniciarScanner;
