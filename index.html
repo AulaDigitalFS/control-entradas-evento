@@ -156,24 +156,12 @@
 </script>
 
   <script>
-  // ⚠️ SOLO USAR UNA VEZ – LUEGO BORRAR
-
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_ID",
-    appId: "TU_APP_ID"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  // ⚠️ SCRIPT TEMPORAL – BORRAR DESPUÉS
 
   const TOTAL = 1500;
 
   async function generarEntradas() {
-    console.log("Iniciando generación...");
+    console.log("Iniciando generación de entradas...");
 
     for (let i = 1; i <= TOTAL; i++) {
       const codigo = `ADEUESO-${String(i).padStart(4, "0")}`;
@@ -181,7 +169,7 @@
       await db.collection("entradas").doc(codigo).set({
         id: codigo,
         usada: false,
-        creada: new Date()
+        creada: firebase.firestore.FieldValue.serverTimestamp()
       });
 
       if (i % 100 === 0) {
@@ -189,12 +177,13 @@
       }
     }
 
-    console.log("✅ Generación completa");
+    console.log("✅ Entradas creadas");
     alert("Entradas creadas correctamente");
   }
 
   generarEntradas();
 </script>
+
   
 </body>
 </html>
