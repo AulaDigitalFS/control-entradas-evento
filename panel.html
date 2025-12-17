@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Control - Evento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { margin-top: 0; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #0f172a;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,.5);
+    }
+    .card span {
+      display: block;
+      font-size: 2em;
+      margin-top: 10px;
+      color: #22c55e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #0f172a;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #1e293b;
+    }
+    th { background: #020617; }
+    .usada { color: #facc15; }
+    .libre { color: #22c55e; }
+  </style>
+</head>
+<body>
+
+<h1>Panel de Control del Evento</h1>
+
+<div class="cards">
+  <div class="card">Entradas Totales<span id="total">0</span></div>
+  <div class="card">Entradas Usadas<span id="usadas">0</span></div>
+  <div class="card">Entradas Disponibles<span id="libres">0</span></div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Estado</th>
+      <th>Hora Ingreso</th>
+    </tr>
+  </thead>
+  <tbody id="tabla"></tbody>
+</table>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+    authDomain: "control-entradas-evento.firebaseapp.com",
+    projectId: "control-entradas-evento",
+    storageBucket: "control-entradas-evento.firebasestorage.app",
+    messagingSenderId: "490742741430",
+    appId: "1:490742741430:web:c3db7037eed6a121346917"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const totalEl = document.getElementById("total");
+  const usadasEl = document.getElementById("usadas");
+  const libresEl = document.getElementById("libres");
+  const tabla = document.getElementById("tabla");
+
+  db.collection("entradas").orderBy("id").onSnapshot(snapshot => {
+    let total = 0;
+    let usadas = 0;
+    tabla.innerHTML = "";
+
+    snapshot.forEach(doc => {
+      total++;
+      const d = doc.data();
+      if (d.usada) usadas++;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${doc.id}</td>
+        <td class="${d.usada ? 'usada' : 'libre'}">${d.usada ? 'Usada' : 'Disponible'}</td>
+        <td>${d.horaIngreso ? d.horaIngreso.toDate().toLocaleString() : '-'}</td>
+      `;
+      tabla.appendChild(tr);
+    });
+
+    totalEl.textContent = total;
+    usadasEl.textContent = usadas;
+    libresEl.textContent = total - usadas;
+  });
+</script>
+
+</body>
+</html>
