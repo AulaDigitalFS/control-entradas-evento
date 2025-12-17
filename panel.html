@@ -55,7 +55,10 @@
 
 <div class="panel" id="dashboard" style="display:none;">
   <h2>📊 Panel de Control</h2>
-  <div class="card total">Total entradas: <span id="total">–</span></div>
+  <div class="card total">Total entradas: <span id="total">0</span></div>
+  <div class="card usadas">Entradas usadas: <span id="usadas">0</span></div>
+  <div class="card disponibles">Disponibles: <span id="disponibles">0</span></div>
+</div>
   <div class="card usadas">Entradas usadas: <span id="usadas">–</span></div>
   <div class="card disponibles">Disponibles: <span id="disponibles">–</span></div>
 </div>
@@ -64,46 +67,54 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+  // 🔥 Firebase config (misma del escáner)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+    authDomain: "control-entradas-evento.firebaseapp.com",
+    projectId: "control-entradas-evento",
+    storageBucket: "control-entradas-evento.firebasestorage.app",
+    messagingSenderId: "490742741430",
+    appId: "1:490742741430:web:c3db7037eed6a121346917"
+  };
 
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const totalEl = document.getElementById("total");
+  const usadasEl = document.getElementById("usadas");
+  const disponiblesEl = document.getElementById("disponibles");
+
+  // 🔐 Protección simple por clave (cambiar la clave)
   const CLAVE_ADMIN = "EVENTO2025";
 
-  const login = document.getElementById("login");
-  const dashboard = document.getElementById("dashboard");
-  const btn = document.getElementById("btnAcceder");
-  const msg = document.getElementById("msg");
-
-  btn.addEventListener("click", () => {
+  document.getElementById("btnAcceder").onclick = () => {
     const v = document.getElementById("clave").value;
     if (v !== CLAVE_ADMIN) {
-      msg.innerText = "Clave incorrecta";
+      document.getElementById("msg").innerText = "Clave incorrecta";
       return;
     }
-    login.style.display = "none";
-    dashboard.style.display = "block";
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
     iniciarPanel();
-  });
+  };
 
   function iniciarPanel() {
-    const totalEl = document.getElementById("total");
-    const usadasEl = document.getElementById("usadas");
-    const disponiblesEl = document.getElementById("disponibles");
-
+    // 📡 Escucha en tiempo real
     db.collection("entradas").onSnapshot(snapshot => {
       let total = snapshot.size;
       let usadas = 0;
-      snapshot.forEach(doc => {
-        if (doc.data().usada === true) usadas++;
-      });
+      snapshot.forEach(doc => { if (doc.data().usada === true) usadas++; });
       totalEl.textContent = total;
       usadasEl.textContent = usadas;
       disponiblesEl.textContent = total - usadas;
     });
   }
 
-});
+    totalEl.textContent = total;
+    usadasEl.textContent = usadas;
+    disponiblesEl.textContent = total - usadas;
+  });
 </script>
-
 
 </body>
 </html>
