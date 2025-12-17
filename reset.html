@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reset de Entradas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Lector QR -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #020617;
+      padding: 25px 30px;
+      border-radius: 12px;
+      width: 360px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    #resultado {
+      margin-top: 15px;
+      font-size: 1.1em;
+      font-weight: bold;
+    }
+    .ok { color: #22c55e; }
+    .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Reset de Entradas</h2>
+  <div id="reader" style="width:300px;"></div>
+  <div id="resultado"></div>
+</div>
+
+<script>
+  // 🔐 PROTECCIÓN BÁSICA
+  if (sessionStorage.getItem("admin") !== "ok") {
+    alert("Acceso no autorizado");
+    location.href = "admin.html";
+  }
+
+  // 🔥 Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+    authDomain: "control-entradas-evento.firebaseapp.com",
+    projectId: "control-entradas-evento",
+    storageBucket: "control-entradas-evento.firebasestorage.app",
+    messagingSenderId: "490742741430",
+    appId: "1:490742741430:web:c3db7037eed6a121346917"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let bloqueado = false;
+  const resultado = document.getElementById("resultado");
+
+  function onScanSuccess(textoQR) {
+    if (bloqueado) return;
+    bloqueado = true;
+
+    if (!textoQR || textoQR.trim().length < 3) {
+      resultado.innerText = "⛔ QR inválido";
+      resultado.className = "error";
+      setTimeout(() => location.reload(), 1500);
+      return;
+    }
+
+    const ref = db.collection("entradas").doc(textoQR.trim());
+
+    ref.get().then(doc => {
+      if (!doc.exists) {
+        resultado.innerText = "⛔ Entrada no existe";
+        resultado.className = "error";
+      } else {
+        ref.update({
+          usada: false,
+          horaIngreso: firebase.firestore.FieldValue.delete()
+        });
+        resultado.innerText = "✅ Entrada reactivada";
+        resultado.className = "ok";
+      }
+    }).catch(() => {
+      resultado.innerText = "⛔ Error de validación";
+      resultado.className = "error";
+    }).finally(() => {
+      setTimeout(() => location.reload(), 1500);
+    });
+  }
+
+  const scanner = new Html5QrcodeScanner("reader", {
+    fps: 10,
+    qrbox: 250
+  });
+
+  scanner.render(onScanSuccess);
+</script>
+
+</body>
+</html>
