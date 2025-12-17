@@ -1,130 +1,125 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Panel de Control – Evento</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>Panel de Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Firebase v9 -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_AUTH_DOMAIN",
-      projectId: "TU_PROJECT_ID",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // 🔐 CLAVE DE ACCESO
-    const CLAVE_PANEL = "EVENTO2025";
-
-    window.validarClave = async function () {
-      const input = document.getElementById("clave").value.trim();
-      const error = document.getElementById("error");
-
-      if (input !== CLAVE_PANEL) {
-        error.textContent = "Clave incorrecta";
-        return;
-      }
-
-      // Ocultar login y mostrar dashboard
-      document.getElementById("login").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
-
-      // Cargar datos
-      await cargarTotales();
-    };
-
-    async function cargarTotales() {
-      const ref = collection(db, "entradas");
-      const snap = await getDocs(ref);
-
-      let usadas = 0;
-      let disponibles = 0;
-
-      snap.forEach(doc => {
-        const d = doc.data();
-        if (d.usada === true) usadas++;
-        else disponibles++;
-      });
-
-      document.getElementById("usadas").textContent = usadas;
-      document.getElementById("disponibles").textContent = disponibles;
-    }
-  </script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
       margin: 0;
-      padding: 0;
-    }
-
-    .contenedor {
-      max-width: 600px;
-      margin: 80px auto;
-      padding: 20px;
+      font-family: Arial, sans-serif;
       background: #020617;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      color: #e5e7eb;
+    }
+    .login, .dashboard {
+      max-width: 420px;
+      margin: 80px auto;
+      background: #020617;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.6);
       text-align: center;
     }
-
-    input {
-      width: 80%;
+    input, button {
+      width: 100%;
       padding: 10px;
-      margin: 10px 0;
+      margin-top: 10px;
+      font-size: 1em;
       border-radius: 6px;
       border: none;
     }
-
     button {
-      padding: 10px 20px;
       background: #2563eb;
       color: white;
-      border: none;
-      border-radius: 6px;
       cursor: pointer;
     }
-
-    .error {
-      color: #f87171;
-      margin-top: 10px;
-    }
-
-    .box {
-      background: #1e293b;
-      margin: 15px 0;
+    button:hover { background: #1d4ed8; }
+    .card {
+      background: #020617;
       padding: 15px;
+      margin: 10px 0;
       border-radius: 8px;
-      font-size: 18px;
+      border: 1px solid #1e293b;
     }
+    .nav a {
+      display: block;
+      margin-top: 10px;
+      color: #38bdf8;
+      text-decoration: none;
+    }
+    .nav a:hover { text-decoration: underline; }
   </style>
 </head>
+
 <body>
 
-  <!-- LOGIN -->
-  <div id="login" class="contenedor">
-    <h2>Acceso al Panel</h2>
-    <input type="password" id="clave" placeholder="Clave de acceso" />
-    <br />
-    <button onclick="validarClave()">Ingresar</button>
-    <div id="error" class="error"></div>
-  </div>
+<!-- 🔐 LOGIN -->
+<div class="login" id="login">
+  <h2>Acceso Panel</h2>
+  <input type="password" id="clave" placeholder="Clave de acceso">
+  <button onclick="acceder()">Entrar</button>
+  <p id="error" style="color:#ef4444;"></p>
+</div>
 
-  <!-- DASHBOARD (OCULTO) -->
-  <div id="dashboard" class="contenedor" style="display:none">
-    <h2>Panel de Control</h2>
+<!-- 📊 DASHBOARD -->
+<div class="dashboard" id="dashboard" style="display:none;">
+  <h2>Panel de Control</h2>
 
-    <div class="box">Entradas usadas: <strong id="usadas">–</strong></div>
-    <div class="box">Entradas disponibles: <strong id="disponibles">–</strong></div>
+  <div class="card">Total entradas: <b id="total">0</b></div>
+  <div class="card">Entradas usadas: <b id="usadas">0</b></div>
+  <div class="card">Disponibles: <b id="disponibles">0</b></div>
+
+  <div class="nav">
+    <a href="index.html">▶ Ir al escáner</a>
+    <a href="reset.html">♻ Resetear entradas</a>
   </div>
+</div>
+
+<script>
+  // 🔑 CLAVE SIMPLE (CAMBIABLE LUEGO)
+  const CLAVE_CORRECTA = "admin123";
+
+  // 🔥 Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+    authDomain: "control-entradas-evento.firebaseapp.com",
+    projectId: "control-entradas-evento"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  function acceder() {
+    const clave = document.getElementById("clave").value;
+    if (clave !== CLAVE_CORRECTA) {
+      document.getElementById("error").innerText = "Clave incorrecta";
+      return;
+    }
+
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    cargarDatos();
+  }
+
+  async function cargarDatos() {
+    const snap = await db.collection("entradas").get();
+
+    let total = snap.size;
+    let usadas = 0;
+
+    snap.forEach(doc => {
+      if (doc.data().usada === true) usadas++;
+    });
+
+    document.getElementById("total").innerText = total;
+    document.getElementById("usadas").innerText = usadas;
+    document.getElementById("disponibles").innerText = total - usadas;
+  }
+</script>
 
 </body>
 </html>
