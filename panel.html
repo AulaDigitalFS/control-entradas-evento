@@ -1,120 +1,130 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Panel de Control – Evento</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Firebase v9 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 🔐 CLAVE DE ACCESO
+    const CLAVE_PANEL = "EVENTO2025";
+
+    window.validarClave = async function () {
+      const input = document.getElementById("clave").value.trim();
+      const error = document.getElementById("error");
+
+      if (input !== CLAVE_PANEL) {
+        error.textContent = "Clave incorrecta";
+        return;
+      }
+
+      // Ocultar login y mostrar dashboard
+      document.getElementById("login").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+
+      // Cargar datos
+      await cargarTotales();
+    };
+
+    async function cargarTotales() {
+      const ref = collection(db, "entradas");
+      const snap = await getDocs(ref);
+
+      let usadas = 0;
+      let disponibles = 0;
+
+      snap.forEach(doc => {
+        const d = doc.data();
+        if (d.usada === true) usadas++;
+        else disponibles++;
+      });
+
+      document.getElementById("usadas").textContent = usadas;
+      document.getElementById("disponibles").textContent = disponibles;
+    }
+  </script>
 
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: #e5e7eb;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
-    .panel {
+
+    .contenedor {
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 20px;
       background: #020617;
-      width: 100%;
-      max-width: 420px;
-      padding: 25px;
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.6);
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
       text-align: center;
     }
-    h2 { margin-top: 0; }
-    .card {
-      background: #020617;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      padding: 15px;
-      margin: 12px 0;
-      font-size: 1.1em;
+
+    input {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: none;
     }
-    .total { color: #38bdf8; }
-    .usadas { color: #facc15; }
-    .disponibles { color: #22c55e; }
+
+    button {
+      padding: 10px 20px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .error {
+      color: #f87171;
+      margin-top: 10px;
+    }
+
+    .box {
+      background: #1e293b;
+      margin: 15px 0;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
 
-<div class="panel" id="login">
-  <h2>🔐 Acceso al Panel</h2>
-  <p>Ingresa la clave de administrador</p>
-  <input type="password" id="clave" placeholder="Clave" style="width:100%;padding:10px;border-radius:8px;border:none;margin-top:10px;">
-  <button id="btnAcceder" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;">Entrar</button>
-  <p id="msg" style="color:#ef4444;margin-top:10px;"></p>
-</div>
+  <!-- LOGIN -->
+  <div id="login" class="contenedor">
+    <h2>Acceso al Panel</h2>
+    <input type="password" id="clave" placeholder="Clave de acceso" />
+    <br />
+    <button onclick="validarClave()">Ingresar</button>
+    <div id="error" class="error"></div>
+  </div>
 
-<div class="panel" id="dashboard" style="display:none;">
-  <h2>📊 Panel de Control</h2>
-  <div class="card total">Total entradas: <span id="total">0</span></div>
-  <div class="card usadas">Entradas usadas: <span id="usadas">0</span></div>
-  <div class="card disponibles">Disponibles: <span id="disponibles">0</span></div>
-</div>
-  <div class="card usadas">Entradas usadas: <span id="usadas">–</span></div>
-  <div class="card disponibles">Disponibles: <span id="disponibles">–</span></div>
-</div>
-  <div class="card usadas">Entradas usadas: <span id="usadas">–</span></div>
-  <div class="card disponibles">Disponibles: <span id="disponibles">–</span></div>
-</div>
+  <!-- DASHBOARD (OCULTO) -->
+  <div id="dashboard" class="contenedor" style="display:none">
+    <h2>Panel de Control</h2>
 
-<script>
-  // 🔥 Firebase config (misma del escáner)
-  const firebaseConfig = {
-    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
-    authDomain: "control-entradas-evento.firebaseapp.com",
-    projectId: "control-entradas-evento",
-    storageBucket: "control-entradas-evento.firebasestorage.app",
-    messagingSenderId: "490742741430",
-    appId: "1:490742741430:web:c3db7037eed6a121346917"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const totalEl = document.getElementById("total");
-  const usadasEl = document.getElementById("usadas");
-  const disponiblesEl = document.getElementById("disponibles");
-
-  // 🔐 Protección simple por clave (cambiar la clave)
-  const CLAVE_ADMIN = "EVENTO2025";
-
-  document.getElementById("btnAcceder").onclick = () => {
-    const v = document.getElementById("clave").value;
-    if (v !== CLAVE_ADMIN) {
-      document.getElementById("msg").innerText = "Clave incorrecta";
-      return;
-    }
-    document.getElementById("login").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
-    iniciarPanel();
-  };
-
-  function iniciarPanel() {
-    // 📡 Escucha en tiempo real
-    db.collection("entradas").onSnapshot(snapshot => {
-      let total = snapshot.size;
-      let usadas = 0;
-      snapshot.forEach(doc => { if (doc.data().usada === true) usadas++; });
-      totalEl.textContent = total;
-      usadasEl.textContent = usadas;
-      disponiblesEl.textContent = total - usadas;
-    });
-  }
-
-    totalEl.textContent = total;
-    usadasEl.textContent = usadas;
-    disponiblesEl.textContent = total - usadas;
-  });
-</script>
+    <div class="box">Entradas usadas: <strong id="usadas">–</strong></div>
+    <div class="box">Entradas disponibles: <strong id="disponibles">–</strong></div>
+  </div>
 
 </body>
 </html>
