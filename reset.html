@@ -21,97 +21,123 @@
       margin: 0;
     }
     .box {
-      background: #0f172a;
-      padding: 30px;
+      background: #020617;
+      border: 1px solid #1e293b;
       border-radius: 12px;
-      width: 360px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      padding: 25px;
+      width: 420px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.6);
     }
-    h2 { margin-top: 0; }
-    .progress {
+    h2 { text-align: center; margin-top: 0; }
+    button {
       width: 100%;
-      background: #1e293b;
+      padding: 12px;
+      font-size: 1em;
+      border: none;
       border-radius: 8px;
-      overflow: hidden;
-      margin-top: 20px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    #resetBtn {
+      background: #dc2626;
+      color: white;
+    }
+    #resetBtn:disabled {
+      background: #7f1d1d;
+      cursor: not-allowed;
+    }
+    .progress {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
       height: 20px;
+      margin-top: 20px;
+      overflow: hidden;
     }
     .bar {
       height: 100%;
       width: 0%;
       background: #22c55e;
-      transition: width 0.2s;
+      transition: width .3s;
     }
-    #estado {
+    #status {
       margin-top: 15px;
-      font-weight: bold;
+      text-align: center;
+    }
+    .back {
+      margin-top: 15px;
+      background: #2563eb;
     }
   </style>
 </head>
 <body>
 
 <div class="box">
-  <h2>Reset de Entradas</h2>
-  <p>Reiniciando todas las entradas…</p>
+  <h2>Reset masivo de QR</h2>
+
+  <p style="font-size:.9em; color:#94a3b8;">
+    Esta acción marca TODAS las entradas como <b>no usadas</b>.
+    Úsala solo cuando el evento no esté en curso.
+  </p>
+
+  <button id="resetBtn">Resetear todas las entradas</button>
 
   <div class="progress">
-    <div class="bar" id="barra"></div>
+    <div class="bar" id="bar"></div>
   </div>
 
-  <div id="estado">Iniciando…</div>
+  <div id="status"></div>
+
+  <button class="back" onclick="location.href='panel.html'">Volver al panel</button>
 </div>
 
 <script>
-// 🔒 PROTECCIÓN: solo desde panel
-if (sessionStorage.getItem("adminReset") !== "ok") {
-  alert("Acceso no autorizado");
-  location.href = "panel.html";
-}
-
-// 🔥 Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
-  authDomain: "control-entradas-evento.firebaseapp.com",
-  projectId: "control-entradas-evento",
-  storageBucket: "control-entradas-evento.firebasestorage.app",
-  messagingSenderId: "490742741430",
-  appId: "1:490742741430:web:c3db7037eed6a121346917"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-const barra = document.getElementById("barra");
-const estado = document.getElementById("estado");
-
-async function resetear() {
-  const snapshot = await db.collection("entradas").get();
-  const total = snapshot.size;
-
-  let contador = 0;
-
-  for (const doc of snapshot.docs) {
-    await db.collection("entradas").doc(doc.id).update({
-      usada: false,
-      horaIngreso: null
-    });
-
-    contador++;
-    const porcentaje = Math.round((contador / total) * 100);
-    barra.style.width = porcentaje + "%";
-    estado.innerText = `Procesadas ${contador} de ${total}`;
+  // 🔐 protección básica (acceso solo desde panel)
+  if (sessionStorage.getItem('panelAuth') !== 'ok') {
+    location.href = 'panel.html';
   }
 
-  estado.innerText = "✅ Reset completado";
-  sessionStorage.removeItem("adminReset");
+  // 🔥 Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+    authDomain: "control-entradas-evento.firebaseapp.com",
+    projectId: "control-entradas-evento",
+    storageBucket: "control-entradas-evento.firebasestorage.app",
+    messagingSenderId: "490742741430",
+    appId: "1:490742741430:web:c3db7037eed6a121346917"
+  };
 
-  setTimeout(() => {
-    location.href = "panel.html";
-  }, 1500);
-}
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-resetear();
+  const btn = document.getElementById('resetBtn');
+  const bar = document.getElementById('bar');
+  const status = document.getElementById('status');
+
+  btn.addEventListener('click', async () => {
+    if (!confirm('¿Confirmas el reset masivo de TODAS las entradas?')) return;
+
+    btn.disabled = true;
+    status.innerText = 'Iniciando reset...';
+
+    const snap = await db.collection('entradas').get();
+    const total = snap.size;
+    let count = 0;
+
+    for (const doc of snap.docs) {
+      await doc.ref.update({
+        usada: false,
+        horaIngreso: firebase.firestore.FieldValue.delete()
+      });
+
+      count++;
+      const percent = Math.round((count / total) * 100);
+      bar.style.width = percent + '%';
+      status.innerText = `Procesadas ${count} de ${total}`;
+    }
+
+    status.innerText = '✅ Reset finalizado correctamente';
+  });
 </script>
 
 </body>
