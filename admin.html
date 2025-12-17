@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Administración</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
+
+    .login, .panel {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      background: #020617;
+      padding: 30px;
+      border-radius: 12px;
+      width: 320px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.6);
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .menu {
+      display: flex;
+      gap: 15px;
+      flex-direction: column;
+    }
+
+    .menu button {
+      background: #16a34a;
+    }
+
+    .menu button.secondary {
+      background: #f59e0b;
+    }
+
+    .menu button.danger {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="login">
+  <div class="card">
+    <h2>Acceso Administrador</h2>
+    <input type="password" id="clave" placeholder="Clave de acceso">
+    <button onclick="login()">Ingresar</button>
+    <p id="error" style="color:#ef4444;"></p>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div class="panel" id="panel" style="display:none;">
+  <div class="card">
+    <h2>Panel Principal</h2>
+
+    <div class="menu">
+      <button onclick="abrir('index.html')">▶️ Lector de Entradas</button>
+      <button class="secondary" onclick="abrir('reset.html')">🔄 Resetear QR</button>
+      <button onclick="abrir('dashboard.html')">📊 Dashboard</button>
+      <button class="danger" onclick="logout()">🔒 Cerrar sesión</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ⚠️ CAMBIA ESTA CLAVE
+  const CLAVE_ADMIN = "ADMIN-2025";
+
+  function login() {
+    const clave = document.getElementById("clave").value;
+    if (clave === CLAVE_ADMIN) {
+      sessionStorage.setItem("admin", "ok");
+      document.getElementById("login").style.display = "none";
+      document.getElementById("panel").style.display = "flex";
+    } else {
+      document.getElementById("error").innerText = "Clave incorrecta";
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem("admin");
+    location.reload();
+  }
+
+  function abrir(pagina) {
+    window.location.href = pagina;
+  }
+
+  // Protección al cargar
+  if (sessionStorage.getItem("admin") === "ok") {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("panel").style.display = "flex";
+  }
+</script>
+
+</body>
+</html>
