@@ -64,54 +64,46 @@
 </div>
 
 <script>
-  // 🔥 Firebase config (misma del escáner)
-  const firebaseConfig = {
-    apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
-    authDomain: "control-entradas-evento.firebaseapp.com",
-    projectId: "control-entradas-evento",
-    storageBucket: "control-entradas-evento.firebasestorage.app",
-    messagingSenderId: "490742741430",
-    appId: "1:490742741430:web:c3db7037eed6a121346917"
-  };
+document.addEventListener("DOMContentLoaded", () => {
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const totalEl = document.getElementById("total");
-  const usadasEl = document.getElementById("usadas");
-  const disponiblesEl = document.getElementById("disponibles");
-
-  // 🔐 Protección simple por clave (cambiar la clave)
   const CLAVE_ADMIN = "EVENTO2025";
 
-  document.getElementById("btnAcceder").onclick = () => {
+  const login = document.getElementById("login");
+  const dashboard = document.getElementById("dashboard");
+  const btn = document.getElementById("btnAcceder");
+  const msg = document.getElementById("msg");
+
+  btn.addEventListener("click", () => {
     const v = document.getElementById("clave").value;
     if (v !== CLAVE_ADMIN) {
-      document.getElementById("msg").innerText = "Clave incorrecta";
+      msg.innerText = "Clave incorrecta";
       return;
     }
-    document.getElementById("login").style.display = "none";
-    document.getElementById("dashboard").style.display = "block";
+    login.style.display = "none";
+    dashboard.style.display = "block";
     iniciarPanel();
-  };
+  });
 
   function iniciarPanel() {
-    // 📡 Escucha en tiempo real
+    const totalEl = document.getElementById("total");
+    const usadasEl = document.getElementById("usadas");
+    const disponiblesEl = document.getElementById("disponibles");
+
     db.collection("entradas").onSnapshot(snapshot => {
       let total = snapshot.size;
       let usadas = 0;
-      snapshot.forEach(doc => { if (doc.data().usada === true) usadas++; });
+      snapshot.forEach(doc => {
+        if (doc.data().usada === true) usadas++;
+      });
       totalEl.textContent = total;
       usadasEl.textContent = usadas;
       disponiblesEl.textContent = total - usadas;
     });
   }
 
-    totalEl.textContent = total;
-    usadasEl.textContent = usadas;
-    disponiblesEl.textContent = total - usadas;
-  });
+});
 </script>
+
 
 </body>
 </html>
