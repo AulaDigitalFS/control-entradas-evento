@@ -45,10 +45,20 @@
 </head>
 <body>
 
-<div class="panel">
-  <h2>📊 Panel de Control</h2>
+<div class="panel" id="login">
+  <h2>🔐 Acceso al Panel</h2>
+  <p>Ingresa la clave de administrador</p>
+  <input type="password" id="clave" placeholder="Clave" style="width:100%;padding:10px;border-radius:8px;border:none;margin-top:10px;">
+  <button id="btnAcceder" style="margin-top:15px;padding:10px 20px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;">Entrar</button>
+  <p id="msg" style="color:#ef4444;margin-top:10px;"></p>
+</div>
 
+<div class="panel" id="dashboard" style="display:none;">
+  <h2>📊 Panel de Control</h2>
   <div class="card total">Total entradas: <span id="total">–</span></div>
+  <div class="card usadas">Entradas usadas: <span id="usadas">–</span></div>
+  <div class="card disponibles">Disponibles: <span id="disponibles">–</span></div>
+</div>
   <div class="card usadas">Entradas usadas: <span id="usadas">–</span></div>
   <div class="card disponibles">Disponibles: <span id="disponibles">–</span></div>
 </div>
@@ -71,14 +81,31 @@
   const usadasEl = document.getElementById("usadas");
   const disponiblesEl = document.getElementById("disponibles");
 
-  // 📡 Escucha en tiempo real
-  db.collection("entradas").onSnapshot(snapshot => {
-    let total = snapshot.size;
-    let usadas = 0;
+  // 🔐 Protección simple por clave (cambiar la clave)
+  const CLAVE_ADMIN = "EVENTO2025";
 
-    snapshot.forEach(doc => {
-      if (doc.data().usada === true) usadas++;
+  document.getElementById("btnAcceder").onclick = () => {
+    const v = document.getElementById("clave").value;
+    if (v !== CLAVE_ADMIN) {
+      document.getElementById("msg").innerText = "Clave incorrecta";
+      return;
+    }
+    document.getElementById("login").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    iniciarPanel();
+  };
+
+  function iniciarPanel() {
+    // 📡 Escucha en tiempo real
+    db.collection("entradas").onSnapshot(snapshot => {
+      let total = snapshot.size;
+      let usadas = 0;
+      snapshot.forEach(doc => { if (doc.data().usada === true) usadas++; });
+      totalEl.textContent = total;
+      usadasEl.textContent = usadas;
+      disponiblesEl.textContent = total - usadas;
     });
+  }
 
     totalEl.textContent = total;
     usadasEl.textContent = usadas;
