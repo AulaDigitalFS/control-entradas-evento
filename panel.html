@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <script>
+  const CLAVE_PANEL = "evento2025"; // cámbiala
+
+  const ingreso = prompt("Ingrese clave del panel:");
+
+  if (ingreso !== CLAVE_PANEL) {
+    alert("Acceso denegado");
+    document.body.innerHTML = "";
+    throw new Error("Acceso bloqueado");
+  }
+</script>
+
   <meta charset="UTF-8">
   <title>Panel de Control - Evento</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
