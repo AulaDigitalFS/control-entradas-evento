@@ -70,7 +70,14 @@
     }
   </style>
 </head>
+  
 <body>
+<script>
+  if (sessionStorage.getItem("adminAuth") !== "OK") {
+    alert("Acceso no autorizado");
+    window.location.href = "index.html";
+  }
+</script>
 
 <div class="box">
   <h2>Reset masivo de QR</h2>
@@ -137,6 +144,8 @@
     }
 
     status.innerText = '✅ Reset finalizado correctamente';
+    // 🔒 cerrar sesión de administrador
+sessionStorage.removeItem('panelAuth');
   });
 </script>
 
