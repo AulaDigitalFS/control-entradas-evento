@@ -23,6 +23,13 @@
       min-height: 100vh;
       margin: 0;
     }
+    .nav a {
+      display: block;
+      margin-top: 10px;
+      color: #38bdf8;
+      text-decoration: none;
+      text-align: center;
+    }
     .container {
       background: #020617;
       padding: 25px 30px;
@@ -63,7 +70,9 @@
   <div id="resultado"></div>
   <button id="reiniciar">Escanear otra vez</button>
 </div>
-
+<div class="nav">
+    <a href="admin.html"> Regresar Menú</a>
+  </div>
 <script>
 /* =========================
    🔥 FIREBASE (UNA SOLA VEZ)
@@ -160,7 +169,7 @@ async function onScanSuccess(textoQR) {
 btnReiniciar.onclick = iniciarScanner;
 iniciarScanner();
 
-<a href="admin.html"> Regresar Menú</a>
+
 /* ==================================================
    ⚠️ GENERADOR DE ENTRADAS (USAR UNA SOLA VEZ)
    👉 DESCOMENTA, RECARGA, ESPERA, VUELVE A COMENTAR
