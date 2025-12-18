@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Control de Entradas</title>
+  <title>Control de Entradas – Evento</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Firebase -->
@@ -15,7 +15,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #0f172a;
+      background: #020617;
       color: #e5e7eb;
       display: flex;
       justify-content: center;
@@ -23,177 +23,128 @@
       min-height: 100vh;
       margin: 0;
     }
-    .nav a {
-      display: block;
-      margin-top: 10px;
-      color: #38bdf8;
-      text-decoration: none;
-      text-align: center;
-    }
     .container {
-      background: #020617;
-      padding: 25px 30px;
-      border-radius: 12px;
+      background: #0f172a;
+      padding: 30px;
+      border-radius: 14px;
       width: 360px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
       text-align: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,.7);
     }
     h2 { margin-top: 0; }
     #reader { margin: 15px auto; }
     #resultado {
       margin-top: 15px;
-      font-size: 1.2em;
+      font-size: 1.4em;
       font-weight: bold;
     }
     .valida { color: #22c55e; }
     .usada { color: #facc15; }
     .bloqueada { color: #ef4444; }
-    #reiniciar {
-      margin-top: 15px;
-      padding: 10px 20px;
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
       font-size: 1em;
       background: #2563eb;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       display: none;
     }
-    #reiniciar:hover { background: #1d4ed8; }
+    button:hover { background: #1d4ed8; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Validación de Entradas</h2>
-  <div id="reader" style="width:300px;"></div>
+  <h2>Escáner de Entradas</h2>
+  <div id="reader"></div>
   <div id="resultado"></div>
-  <button id="reiniciar">Escanear otra vez</button>
-  <div class="nav">
-    <a href="admin.html"> Regresar Menú</a>
-  </div>
+  <button id="btn">Escanear siguiente</button>
 </div>
+
 <script>
-  
-/* =========================
-   🔥 FIREBASE (UNA SOLA VEZ)
-   ========================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
-  authDomain: "control-entradas-evento.firebaseapp.com",
-  projectId: "control-entradas-evento",
-  storageBucket: "control-entradas-evento.firebasestorage.app",
-  messagingSenderId: "490742741430",
-  appId: "1:490742741430:web:c3db7037eed6a121346917",
-};
+  document.addEventListener('DOMContentLoaded', () => {
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+    const firebaseConfig = {
+      apiKey: "AIzaSyCf4xLP2mfVGsoSCtjrtgf1FLNFpwtNpoI",
+      authDomain: "control-entradas-evento.firebaseapp.com",
+      projectId: "control-entradas-evento",
+      storageBucket: "control-entradas-evento.firebasestorage.app",
+      messagingSenderId: "490742741430",
+      appId: "1:490742741430:web:c3db7037eed6a121346917"
+    };
 
-/* =========================
-   📷 ESCÁNER QR
-   ========================= */
-let scanner = null;
-let bloqueado = false;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-const resultado = document.getElementById("resultado");
-const btnReiniciar = document.getElementById("reiniciar");
+    let scanner;
+    let bloqueado = false;
 
-function mostrar(mensaje, clase) {
-  resultado.className = clase;
-  resultado.innerText = mensaje;
-  btnReiniciar.style.display = "inline-block";
-}
+    const resultado = document.getElementById('resultado');
+    const btn = document.getElementById('btn');
 
-function iniciarScanner() {
-  bloqueado = false;
-  resultado.innerText = "";
-  resultado.className = "";
-  btnReiniciar.style.display = "none";
+    function mostrar(msg, clase) {
+      resultado.className = clase;
+      resultado.innerText = msg;
+      btn.style.display = 'block';
+    }
 
-  if (scanner) {
-    scanner.clear().catch(() => {});
-  }
+    function iniciar() {
+      bloqueado = false;
+      resultado.innerText = '';
+      resultado.className = '';
+      btn.style.display = 'none';
 
-  scanner = new Html5QrcodeScanner("reader", {
-    fps: 10,
-    qrbox: 250,
+      if (scanner) scanner.clear();
+
+      scanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: 250 });
+      scanner.render(onScan);
+    }
+
+    async function onScan(textoQR) {
+      if (bloqueado) return;
+      bloqueado = true;
+      scanner.clear();
+
+      const codigo = textoQR.trim();
+      if (!codigo) {
+        mostrar('⛔ QR inválido', 'bloqueada');
+        return;
+      }
+
+      try {
+        const ref = db.collection('entradas').doc(codigo);
+        const doc = await ref.get();
+
+        if (!doc.exists) {
+          mostrar('⛔ Entrada inexistente', 'bloqueada');
+          return;
+        }
+
+        if (doc.data().usada) {
+          mostrar('⚠️ Entrada ya utilizada', 'usada');
+          return;
+        }
+
+        await ref.update({
+          usada: true,
+          horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        mostrar('✅ Acceso permitido', 'valida');
+
+      } catch {
+        mostrar('⛔ Error de validación', 'bloqueada');
+      }
+    }
+
+    btn.onclick = iniciar;
+    iniciar();
   });
-
-  scanner.render(onScanSuccess);
-}
-
-async function onScanSuccess(textoQR) {
-  if (bloqueado) return;
-  bloqueado = true;
-
-  scanner.clear();
-
-  if (!textoQR || textoQR.trim().length < 3) {
-    mostrar("⛔ QR alterado o inválido", "bloqueada");
-    return;
-  }
-
-  const codigo = textoQR.trim();
-  const ref = db.collection("entradas").doc(codigo);
-
-  try {
-    const doc = await ref.get();
-
-    if (!doc.exists) {
-      mostrar("⛔ QR inexistente", "bloqueada");
-      return;
-    }
-
-    const data = doc.data();
-
-    if (data.usada === true) {
-      mostrar("⚠️ Entrada ya utilizada", "usada");
-      return;
-    }
-
-    // 👉 SOLO AQUÍ se marca como usada
-    await ref.update({
-      usada: true,
-      horaIngreso: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    mostrar("✅ Entrada válida", "valida");
-
-  } catch (error) {
-    console.error(error);
-    mostrar("⛔ Error de validación", "bloqueada");
-  }
-}
-
-
-btnReiniciar.onclick = iniciarScanner;
-iniciarScanner();
-
-
-/* ==================================================
-   ⚠️ GENERADOR DE ENTRADAS (USAR UNA SOLA VEZ)
-   👉 DESCOMENTA, RECARGA, ESPERA, VUELVE A COMENTAR
-   ================================================== abajo cerrar antes del ascript */
-/*
-const TOTAL = 1500;
-
-(async function generarEntradas() {
-  console.log("Generando entradas...");
-  for (let i = 1; i <= TOTAL; i++) {
-    const codigo = `ADEUESO-${String(i).padStart(4, "0")}`;
-    await db.collection("entradas").doc(codigo).set({
-      id: codigo,
-      usada: false,
-      creada: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    if (i % 100 === 0) console.log(i + " creadas");
-  }
-  alert("✅ Entradas generadas");
-})();
-*/
 </script>
 
 </body>
 </html>
-
